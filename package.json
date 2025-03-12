@@ -1,0 +1,25 @@
+{
+  "name": "orgel",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx ts-node index.ts",
+    "commands": "npx ts-node deploy-commands.ts",
+    "dev": "nodemon --watch ./ --ext ts --exec \"npx ts-node ./index.ts\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@discordjs/voice": "^0.18.0",
+    "@distube/ytdl-core": "^4.16.4",
+    "@types/node": "^22.13.9",
+    "axios": "^1.8.2",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "ffmpeg-static": "^5.2.0",
+    "ytsr": "^3.8.4"
+  }
+}
