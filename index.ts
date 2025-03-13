@@ -45,7 +45,7 @@ client.once("ready", () => {
 
 client.on("interactionCreate", async (interaction) => {
   if (musicPlayer === null) {
-    musicPlayer = new MusicPlayer();
+    musicPlayer = new MusicPlayer(client);
   }
   try {
     if (interaction.isButton() || interaction.isStringSelectMenu()) {

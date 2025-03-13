@@ -12,24 +12,25 @@ import {
   ButtonInteraction,
   ButtonStyle,
   ChatInputCommandInteraction,
+  Client,
   EmbedBuilder,
   GuildMember,
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
+  VoiceBasedChannel,
 } from "discord.js";
 import ytdl from "@distube/ytdl-core";
 import ytsr from "ytsr";
 import axios from "axios";
 import fs from "fs";
+import { DisTube } from "distube";
+import SoundCloudPlugin from "@distube/soundcloud";
+import SpotifyPlugin from "@distube/spotify";
 
 interface Song {
   url: string;
   title: string;
 }
-
-const agent = ytdl.createAgent(
-  JSON.parse(fs.readFileSync("cookies.json", "utf8"))
-);
 
 export class MusicPlayer {
   private connection: VoiceConnection | null = null;
@@ -40,6 +41,14 @@ export class MusicPlayer {
   private selectedTrackIndex: number | null = null; // 현재 선택된 곡, 삭제 or 즉시재생 위해 사용
   private playerMessage: string | null = null;
   private isPaused: boolean = true;
+  private distube: DisTube;
+  private voiceChannel: VoiceBasedChannel | null = null;
+
+  constructor(client: Client) {
+    this.distube = new DisTube(client, {
+      plugins: [new SpotifyPlugin(), new SoundCloudPlugin()],
+    });
+  }
 
   get getMessageId() {
     return this.playerMessage;
@@ -141,11 +150,8 @@ export class MusicPlayer {
       return false;
     }
 
-    this.connection = joinVoiceChannel({
-      channelId: interaction.member.voice.channel.id,
-      guildId: interaction.guildId!,
-      adapterCreator: interaction.guild!.voiceAdapterCreator,
-    });
+    this.voiceChannel = interaction.member.voice.channel;
+    this.distube.voices.join(this.voiceChannel);
     return true;
   }
 
@@ -206,15 +212,6 @@ export class MusicPlayer {
     console.log(nextTrack.url);
     console.log(nextTrack.title);
     try {
-      const stream = ytdl(nextTrack.url, {
-        highWaterMark: 1 << 25,
-        quality: "highestaudio",
-        liveBuffer: 4900,
-        filter: "audioonly",
-        agent,
-      });
-
-      const resource = createAudioResource(stream);
       if (!this.player) {
         this.player = createAudioPlayer();
         this.connection?.subscribe(this.player);
@@ -243,7 +240,10 @@ export class MusicPlayer {
         });
       }
 
-      this.player.play(resource);
+      if (this.voiceChannel) {
+        this.distube.play(this.voiceChannel, nextTrack.title);
+      }
+
       this.currentSong = nextTrack;
       await this.updatePlayer(this.playerMessage, interaction);
     } catch (error) {
@@ -279,6 +279,18 @@ export class MusicPlayer {
       this.selectedTrackIndex = null;
       this.skip(interaction);
     }
+  }
+
+  async play_test(
+    interaction: ChatInputCommandInteraction,
+    keyword: string
+  ): Promise<void> {
+    console.log("test start");
+    if (interaction.member instanceof GuildMember) {
+      this.voiceChannel = interaction.member.voice.channel;
+      this.distube.voices.join(this.voiceChannel!);
+    }
+    this.distube.play(this.voiceChannel!, keyword);
   }
 
   async handleSelect(interaction: StringSelectMenuInteraction) {
