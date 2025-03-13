@@ -20,11 +20,16 @@ import {
 import ytdl from "@distube/ytdl-core";
 import ytsr from "ytsr";
 import axios from "axios";
+import fs from "fs";
 
 interface Song {
   url: string;
   title: string;
 }
+
+const agent = ytdl.createAgent(
+  JSON.parse(fs.readFileSync("cookies.json", "utf8"))
+);
 
 export class MusicPlayer {
   private connection: VoiceConnection | null = null;
@@ -120,8 +125,10 @@ export class MusicPlayer {
           content: "뮤직 플레이어가 만료되었습니다.",
           components: [],
         });
-        this.playerMessage = null;
       }
+    }
+    if (messageId === this.playerMessage) {
+      this.playerMessage = null;
     }
   }
 
@@ -169,10 +176,7 @@ export class MusicPlayer {
   }
 
   private async playNext(
-    interaction:
-      | ChatInputCommandInteraction
-      | ButtonInteraction
-      | StringSelectMenuInteraction
+    interaction: ChatInputCommandInteraction
   ): Promise<void> {
     if (this.queue.length === 0) {
       this.isPlaying = false;
@@ -182,6 +186,7 @@ export class MusicPlayer {
       // 1분 타이머 설정
       setTimeout(() => {
         if (!this.isPlaying && this.connection) {
+          this.deletePlayer(this.playerMessage, interaction);
           this.connection.destroy();
           this.connection = null;
           console.log("Disconnected due to inactivity.");
@@ -206,6 +211,7 @@ export class MusicPlayer {
         quality: "highestaudio",
         liveBuffer: 4900,
         filter: "audioonly",
+        agent,
       });
 
       const resource = createAudioResource(stream);
@@ -336,14 +342,15 @@ export class MusicPlayer {
       | ButtonInteraction
       | StringSelectMenuInteraction
   ): Promise<void> {
-    this.player?.stop(); // 현재 곡 중지
     if (interaction.isChatInputCommand()) {
       await this.showPlayer(interaction);
+    } else {
+      this.updatePlayer(this.playerMessage, interaction);
     }
+    this.player?.stop(); // 현재 곡 중지
     this.isPlaying = false;
     this.isPaused = true;
     this.currentSong = null;
-    this.playNext(interaction); // 다음 곡 재생
   }
 
   private async searchYouTube(
