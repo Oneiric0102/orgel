@@ -1,13 +1,7 @@
-import {
-  Client,
-  GatewayIntentBits,
-  Collection,
-  VoiceState,
-  ChannelType,
-} from "discord.js";
+import { Client, GatewayIntentBits, Collection, VoiceState } from "discord.js";
 import fs from "fs";
 import path from "path";
-import { AudioPlayerError, getVoiceConnection } from "@discordjs/voice";
+import { AudioPlayerError } from "@discordjs/voice";
 import { MusicPlayer } from "./music";
 
 require("dotenv").config();
@@ -64,6 +58,10 @@ client.on("interactionCreate", async (interaction) => {
         await musicPlayer.delete(interaction);
       } else if (customId === "playNow") {
         await musicPlayer.playNow(interaction);
+      } else if (customId === "autoPlay") {
+        await musicPlayer.autoPlay(interaction);
+      } else {
+        await musicPlayer.updatePlayer(interaction);
       }
       return;
     } else if (interaction.isStringSelectMenu()) {
@@ -93,7 +91,7 @@ client.on("interactionCreate", async (interaction) => {
         musicPlayer.skip(interaction);
       } else {
         interaction.followUp("오류 발생으로 인해 플레이어를 종료합니다.");
-        musicPlayer.deletePlayer(musicPlayer.getMessageId, interaction);
+        musicPlayer.deletePlayer();
       }
     }
   }
@@ -103,6 +101,7 @@ client.on("voiceStateUpdate", (oldState: VoiceState, newState: VoiceState) => {
   if (oldState.channel && !newState.channel) {
     // 봇이 채널에서 퇴장한 경우
     if (oldState.member && oldState.member.id === client.user?.id) {
+      musicPlayer?.stop();
       musicPlayer = null;
     }
   }
@@ -110,12 +109,8 @@ client.on("voiceStateUpdate", (oldState: VoiceState, newState: VoiceState) => {
   if (channel && channel.members.size === 1) {
     const firstMember = channel.members.first();
     if (client.user && firstMember && firstMember.id === client.user.id) {
-      if (channel.type === ChannelType.GuildVoice) {
-        const connection = getVoiceConnection(channel.guild.id);
-        if (connection) {
-          connection.destroy();
-        }
-      }
+      musicPlayer?.stop();
+      musicPlayer = null;
     }
   }
 });

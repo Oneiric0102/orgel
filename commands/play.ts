@@ -18,7 +18,7 @@ module.exports = {
   ) {
     const keyword = interaction.options.getString("keyword");
     if (keyword) {
-      await musicPlayer.play_test(interaction, keyword);
+      await musicPlayer.play(interaction, keyword);
     } else {
       await interaction.reply("Please provide a keyword to search for a song.");
     }

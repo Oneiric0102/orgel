@@ -3,9 +3,6 @@ require("dotenv").config();
 
 const commands = [
   new SlashCommandBuilder()
-    .setName("join")
-    .setDescription("음성 채널 입장하기"),
-  new SlashCommandBuilder()
     .setName("play")
     .setDescription("노래 재생하기")
     .addStringOption((option) =>
@@ -14,15 +11,12 @@ const commands = [
         .setDescription("노래 이름 or YouTube URL")
         .setRequired(true)
     ),
-  new SlashCommandBuilder().setName("pause").setDescription("일시정지"),
-  new SlashCommandBuilder().setName("resume").setDescription("재생"),
   new SlashCommandBuilder()
     .setName("stop")
     .setDescription("뮤직 플레이어 종료"),
   new SlashCommandBuilder()
     .setName("player")
     .setDescription("뮤직 플레이어 인터페이스 실행"),
-  new SlashCommandBuilder().setName("skip").setDescription("다음곡 재생"),
   new SlashCommandBuilder().setName("clear").setDescription("재생목록 초기화"),
 ];
 
